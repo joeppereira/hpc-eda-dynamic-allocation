@@ -1,0 +1,31 @@
+HPC Learning System - S3 Configuration
+======================================
+
+S3 Bucket Path:
+s3://parallelcluster-e140fb2097b14600-v1-do-not-delete/hpc-learning-results
+
+Usage:
+------
+
+1. Run deployment with this bucket:
+   bash aws/deploy_and_test_complete.sh localhost s3://parallelcluster-e140fb2097b14600-v1-do-not-delete/hpc-learning-results
+
+2. Or set as environment variable:
+   export S3_BUCKET="s3://parallelcluster-e140fb2097b14600-v1-do-not-delete/hpc-learning-results"
+   bash aws/deploy_and_test_complete.sh
+
+3. View uploaded results:
+   aws s3 ls s3://parallelcluster-e140fb2097b14600-v1-do-not-delete/hpc-learning-results/
+
+4. Download results:
+   aws s3 sync s3://parallelcluster-e140fb2097b14600-v1-do-not-delete/hpc-learning-results/ ./local-results/
+
+Bucket Details:
+--------------
+- Type: ParallelCluster managed bucket
+- Name: parallelcluster-e140fb2097b14600-v1-do-not-delete
+- Path: /hpc-learning-results/
+- Region: (auto-detected from cluster)
+
+Note: This bucket is managed by AWS ParallelCluster and will be deleted when the cluster is deleted.
+      Make sure to download important results before terminating the cluster.
