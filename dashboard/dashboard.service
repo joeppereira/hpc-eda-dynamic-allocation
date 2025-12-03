@@ -1,0 +1,16 @@
+[Unit]
+Description=HPC Resource Optimization Dashboard
+After=network.target
+
+[Service]
+Type=simple
+User=ec2-user
+WorkingDirectory=/shared/hpc-optimization/dashboard
+Environment="DB_PATH=/shared/hpc_metrics.db"
+Environment="FLASK_ENV=production"
+ExecStart=/usr/bin/python3 /shared/hpc-optimization/dashboard/app.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

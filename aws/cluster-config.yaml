@@ -1,0 +1,76 @@
+Region: us-east-1
+Image:
+  Os: ubuntu2204
+
+HeadNode:
+  InstanceType: c5.xlarge
+  Networking:
+    SubnetId: subnet-XXXXXXXX  # Replace with your subnet ID
+  Ssh:
+    KeyName: your-key-pair  # Replace with your EC2 key pair name
+  LocalStorage:
+    RootVolume:
+      Size: 100
+  Iam:
+    AdditionalIamPolicies:
+      - Policy: arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      - Policy: arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+
+Scheduling:
+  Scheduler: slurm
+  SlurmQueues:
+    - Name: compute
+      ComputeResources:
+        - Name: openroad-nodes
+          InstanceType: c5.4xlarge
+          MinCount: 0
+          MaxCount: 10
+          DisableSimultaneousMultithreading: false
+      Networking:
+        SubnetIds:
+          - subnet-XXXXXXXX  # Replace with your subnet ID
+        PlacementGroup:
+          Enabled: false
+      ComputeSettings:
+        LocalStorage:
+          RootVolume:
+            Size: 100
+      CustomActions:
+        OnNodeConfigured:
+          Script: s3://your-bucket/scripts/setup-compute-node.sh  # Replace with your S3 bucket
+  SlurmSettings:
+    ScaledownIdletime: 10  # Scale down idle nodes after 10 minutes
+    EnableMemoryBasedScheduling: true
+
+SharedStorage:
+  - MountDir: /shared
+    Name: shared-efs
+    StorageType: Efs
+    EfsSettings:
+      ThroughputMode: bursting
+      PerformanceMode: generalPurpose
+      Encrypted: true
+
+Monitoring:
+  DetailedMonitoring: true
+  Logs:
+    CloudWatch:
+      Enabled: true
+      RetentionInDays: 7
+
+Tags:
+  - Key: Project
+    Value: HPC-Resource-Optimization
+  - Key: Environment
+    Value: Development
+  - Key: ManagedBy
+    Value: ParallelCluster
+
+AdditionalPackages:
+  IntelSoftware:
+    IntelHpcPlatform: false
+
+# Custom bootstrap actions
+DevSettings:
+  Cookbook:
+    ChefCookbook: s3://your-bucket/cookbooks/custom-cookbook.tgz  # Optional

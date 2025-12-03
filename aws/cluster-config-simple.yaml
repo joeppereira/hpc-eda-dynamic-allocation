@@ -1,0 +1,60 @@
+Region: us-east-1
+Image:
+  Os: alinux2
+
+HeadNode:
+  InstanceType: c5.xlarge
+  Networking:
+    SubnetId: subnet-06b3a8f511e1f1213
+  Ssh:
+    KeyName: eda-cluster-key
+  LocalStorage:
+    RootVolume:
+      Size: 50
+  Iam:
+    AdditionalIamPolicies:
+      - Policy: arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      - Policy: arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+      - Policy: arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+
+Scheduling:
+  Scheduler: slurm
+  SlurmQueues:
+    - Name: compute
+      ComputeResources:
+        - Name: openroad
+          InstanceType: c5.4xlarge
+          MinCount: 0
+          MaxCount: 2
+      Networking:
+        SubnetIds:
+          - subnet-06b3a8f511e1f1213
+      ComputeSettings:
+        LocalStorage:
+          RootVolume:
+            Size: 50
+  SlurmSettings:
+    ScaledownIdletime: 5
+    EnableMemoryBasedScheduling: true
+
+SharedStorage:
+  - MountDir: /shared
+    Name: shared-efs
+    StorageType: Efs
+    EfsSettings:
+      ThroughputMode: bursting
+      PerformanceMode: generalPurpose
+      Encrypted: true
+
+Monitoring:
+  DetailedMonitoring: false
+  Logs:
+    CloudWatch:
+      Enabled: true
+      RetentionInDays: 3
+
+Tags:
+  - Key: Project
+    Value: HPC-Resource-Optimization
+  - Key: Environment
+    Value: Development

@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  slurmctld:
+    image: giovtorres/docker-centos7-slurm:latest
+    hostname: slurmctld
+    container_name: slurmctld
+    privileged: true
+    volumes:
+      - ./data:/data
+      - ./scripts:/scripts
+      - ./monitoring:/monitoring
+      - ./database:/database
+      - ./prediction:/prediction
+    ports:
+      - "6817:6817"
+    command: ["/usr/sbin/slurmctld", "-D", "-vvv"]
+    networks:
+      - slurm
+
+  slurmd:
+    image: giovtorres/docker-centos7-slurm:latest
+    hostname: slurmd
+    container_name: slurmd
+    privileged: true
+    volumes:
+      - ./data:/data
+      - ./scripts:/scripts
+      - ./monitoring:/monitoring
+    depends_on:
+      - slurmctld
+    command: ["/usr/sbin/slurmd", "-D", "-vvv"]
+    networks:
+      - slurm
+
+networks:
+  slurm:
+    driver: bridge
