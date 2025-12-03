@@ -10,10 +10,10 @@ NC='\033[0m'
 
 echo -e "${BLUE}=== Push to GitLab (Midway Authentication) ===${NC}"
 
-GITLAB_URL="https://gitlab.aws.dev/spereirj/dynamic_allocation.git"
+GITLAB_URL="git@gitlab.aws.dev:spereirj/dynamic_allocation.git"
 
 echo -e "${YELLOW}Target: ${GITLAB_URL}${NC}"
-echo -e "${YELLOW}Note: Use Midway credentials when prompted${NC}"
+echo -e "${YELLOW}Note: Using Midway SSH keys${NC}"
 echo ""
 
 # Check current branch
@@ -31,8 +31,8 @@ if git remote | grep -q "gitlab"; then
     git remote remove gitlab
 fi
 
-# Add GitLab remote with HTTPS
-echo -e "${BLUE}Adding GitLab remote (HTTPS)...${NC}"
+# Add GitLab remote with SSH
+echo -e "${BLUE}Adding GitLab remote (SSH)...${NC}"
 git remote add gitlab "$GITLAB_URL"
 
 # Show remotes
@@ -53,7 +53,6 @@ echo ""
 
 # Push to GitLab
 echo -e "${BLUE}Pushing to GitLab...${NC}"
-echo -e "${YELLOW}⚠️  Use your Midway credentials when prompted${NC}"
 echo ""
 
 if git push -u gitlab "$CURRENT_BRANCH"; then
