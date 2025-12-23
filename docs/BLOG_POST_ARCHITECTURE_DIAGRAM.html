@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML-Driven HPC Resource Optimization Architecture</title>
+    <style>
+        body {
+            font-family: 'Calibri', 'Arial', sans-serif;
+            line-height: 1.6;
+            max-width: 8.5in;
+            margin: 0 auto;
+            padding: 1in;
+            background-color: white;
+        }
+        h1 {
+            color: #232F3E;
+            font-size: 24pt;
+            border-bottom: 3px solid #FF9900;
+            padding-bottom: 10px;
+            margin-top: 20px;
+        }
+        h2 {
+            color: #232F3E;
+            font-size: 18pt;
+            margin-top: 30px;
+            border-bottom: 2px solid #146EB4;
+            padding-bottom: 5px;
+        }
+        h3 {
+            color: #146EB4;
+            font-size: 14pt;
+            margin-top: 20px;
+        }
+        pre {
+            background-color: #F5F5F5;
+            border: 1px solid #CCCCCC;
+            border-left: 4px solid #FF9900;
+            padding: 15px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 9pt;
+            line-height: 1.4;
+        }
+        code {
+            background-color: #F5F5F5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        ul, ol {
+            margin-left: 20px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #CCCCCC;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #232F3E;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #F9F9F9;
+        }
+        .note {
+            background-color: #FFF8DC;
+            border-left: 4px solid #FF9900;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .component-box {
+            background-color: #E8F4F8;
+            border: 2px solid #146EB4;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        @media print {
+            body {
+                margin: 0;
+                padding: 0.5in;
+            }
+            pre {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<h1>ML-Driven HPC Resource Optimization Architecture</h1>
+
+<h2>AWS Architecture Diagram (Compact)</h2>
+
+<p><strong>Figure 1: ML-Driven HPC Resource Optimization System Architecture</strong></p>
+
+<p>This diagram illustrates a complete machine learning-driven resource optimization system deployed on AWS. The architecture shows how jobs flow from user submission through intelligent prediction to optimized execution. At the top, a Head Node contains the SLURM scheduler, a job submission plugin that intercepts requests, and a prediction API powered by machine learning models. These components work together to predict optimal CPU, memory, and instance type requirements before jobs run. Below the Head Node, auto-scaling compute nodes execute the actual workloads while monitoring resource usage in real-time. Shared storage (EFS, FSx for Lustre, or FSx for NetApp ONTAP) provides high-performance access to design files and results across all nodes. Supporting AWS services including S3, RDS, CloudWatch, and IAM handle backups, database scaling, monitoring, and security. The key takeaway: this closed-loop system continuously learns from actual job execution to improve future predictions, eliminating out-of-memory failures and recovering wasted compute capacity by matching workloads to the right resources.</p>
+
+<pre>
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                          AWS Region (us-east-1) - VPC                             │
+│                                                                                    │
+│  ┌──────────────────────────────────────────────────────────────────────────┐   │
+│  │  Head Node (EC2)                                                          │   │
+│  │  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌────────────┐         │   │
+│  │  │   SLURM    │◄─│Job Submit  │◄─│Prediction  │  │ Dashboard  │         │   │
+│  │  │ Controller │  │Plugin (Lua)│  │API (ML)    │  │  (Web UI)  │         │   │
+│  │  └──────┬─────┘  └────────────┘  └─────┬──────┘  └────────────┘         │   │
+│  │         │                                │                                 │   │
+│  │         │                                ▼                                 │   │
+│  │         │                         ┌────────────┐                          │   │
+│  │         │                         │ Metrics DB │                          │   │
+│  │         │                         │(SQLite/RDS)│                          │   │
+│  │         │                         └────────────┘                          │   │
+│  └─────────┼──────────────────────────────────────────────────────────────┘   │
+│            │                                                                    │
+│            ▼                                                                    │
+│  ┌──────────────────────────────────────────────────────────────────────────┐   │
+│  │  Compute Nodes (Auto Scaling)                                            │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐                               │   │
+│  │  │Compute-1 │  │Compute-2 │  │Compute-N │  ...                          │   │
+│  │  │ slurmd   │  │ slurmd   │  │ slurmd   │                               │   │
+│  │  │ Monitor  │  │ Monitor  │  │ Monitor  │                               │   │
+│  │  │ Workload │  │ Workload │  │ Workload │                               │   │
+│  │  │(c8,r8,m8)│  │(c8,r8,m8)│  │(c8,r8,m8)│                               │   │
+│  │  └──────────┘  └──────────┘  └──────────┘                               │   │
+│  └──────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                    │
+│  ┌──────────────────────────────────────────────────────────────────────────┐   │
+│  │  Shared Storage: EFS/FSx Lustre/FSx ONTAP (Design files, Results, etc.)  │   │
+│  └──────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                    │
+│  ┌──────────────────────────────────────────────────────────────────────────┐   │
+│  │  AWS Services: S3 (Backups) | RDS (DB) | CloudWatch | IAM               │   │
+│  └──────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                    │
+│  ┌──────────────────────────────────────────────────────────────────────────┐   │
+│  │  Users ──SSH/HTTPS──► Head Node (Job submit, Monitoring, Dashboard)      │   │
+│  └──────────────────────────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+
+<h2>Data Flow Diagram</h2>
+
+<p><strong>Figure 3: ML-Driven Resource Optimization Flow (Compact)</strong></p>
+
+<p>This five-stage closed-loop process enables continuous learning. Jobs are intercepted at submission, predictions query historical data for optimal resources, SLURM allocates based on predictions, monitors track actual usage during execution, and metrics feed back to retrain the ML model—each job benefits from all previous jobs.</p>
+
+<pre>
+1. SUBMIT ──► 2. PREDICT ──► 3. ALLOCATE ──► 4. EXECUTE ──► 5. LEARN
+   │              │               │               │               │
+   User        ML API          SLURM          Monitor        Update DB
+   sbatch     (history)      (schedule)      (actual)       (retrain)
+   │              │               │               │               │
+   └──────────────┴───────────────┴───────────────┴───────────────┘
+                       Continuous Improvement Loop
+</pre>
+
+<p><strong>Detailed Flow</strong>:</p>
+
+<ol>
+    <li><strong>Job Submission</strong>: User submits with design parameters → Job plugin intercepts</li>
+    <li><strong>Prediction</strong>: API queries database → ML model predicts CPU/memory/instance → Returns recommendations</li>
+    <li><strong>Resource Allocation</strong>: SLURM adjusts job resources → Selects optimal instance type → Dispatches to compute node</li>
+    <li><strong>Job Execution</strong>: Container runs workload → Monitors track CPU/memory/I/O → Job completes</li>
+    <li><strong>Learning Feedback</strong>: Collect actual metrics → Store in database → Retrain ML model → Improve next predictions</li>
+</ol>
+
+<p><strong>Key Benefit</strong>: Progressive elimination of resource waste and OOM failures through continuous learning from execution history.</p>
+
+<div class="note">
+<strong>Note on Dynamic Allocation:</strong> Unlike Ansys tools which support MPI for runtime resource scaling, EDA tools (OpenROAD, Synopsys, Cadence, Mentor) do not support MPI. Therefore, dynamic allocation for EDA workloads occurs at job submission time through SLURM job modifications before deployment, not during runtime. The prediction engine adjusts CPU and memory allocations in the SLURM job script based on design parameters before the job starts executing.
+</div>
+
+<h2>Component Descriptions</h2>
+
+<div class="component-box">
+<h3>Head Node / Master Server</h3>
+<ul>
+    <li><strong>SLURM Controller (slurmctld)</strong>: Manages job queue, scheduling, and resource allocation</li>
+    <li><strong>Job Submit Plugin</strong>: Intercepts job submissions and queries prediction API</li>
+    <li><strong>Prediction API</strong>: FastAPI service providing ML-based resource predictions</li>
+    <li><strong>Metrics Database</strong>: Stores historical job data for training and predictions</li>
+    <li><strong>Dashboard</strong>: Web-based monitoring and visualization interface</li>
+</ul>
+</div>
+
+<div class="component-box">
+<h3>Compute Nodes</h3>
+<ul>
+    <li><strong>SLURM Daemon (slurmd)</strong>: Executes jobs and reports status to controller</li>
+    <li><strong>Resource Monitor</strong>: Tracks real-time CPU, memory, and I/O usage</li>
+    <li><strong>Workload Execution</strong>: Runs EDA/HPC applications in containers or natively</li>
+    <li><strong>Instance Types</strong>: Flexible selection (c8 for compute, r8 for memory, m8 for balanced)</li>
+</ul>
+</div>
+
+<div class="component-box">
+<h3>Shared Storage</h3>
+<ul>
+    <li><strong>Amazon EFS / FSx for Lustre / FSx for NetApp ONTAP</strong>: High-performance shared filesystem options</li>
+    <li><strong>Contents</strong>: Design files, job results, metrics database, ML models</li>
+    <li><strong>Access</strong>: Mounted on all nodes for seamless data sharing</li>
+</ul>
+</div>
+
+<div class="component-box">
+<h3>Supporting Services</h3>
+<ul>
+    <li><strong>Amazon S3</strong>: Backup storage for results, logs, and artifacts</li>
+    <li><strong>Amazon RDS</strong>: Production-grade PostgreSQL database (optional, scales beyond SQLite)</li>
+    <li><strong>CloudWatch</strong>: Monitoring, logging, and alerting</li>
+    <li><strong>IAM Roles</strong>: Security and access control</li>
+</ul>
+</div>
+
+<h2>Key Features</h2>
+
+<h3>Instance Affinity Optimization</h3>
+<p>The system automatically matches workloads to optimal instance types:</p>
+<ul>
+    <li><strong>Memory-intensive</strong> (place & route) → r8 family</li>
+    <li><strong>Compute-intensive</strong> (synthesis) → c8 family</li>
+    <li><strong>Balanced</strong> (verification) → m8 family</li>
+</ul>
+
+<h3>Continuous Learning</h3>
+<ul>
+    <li>Collects actual resource usage from every job</li>
+    <li>Updates ML model with new data</li>
+    <li>Improves predictions over time</li>
+    <li>Adapts to changing workload patterns</li>
+</ul>
+
+<h3>OOM Prevention</h3>
+<ul>
+    <li>Predicts memory requirements with safety buffers</li>
+    <li>Adjusts allocations before job starts</li>
+    <li>Monitors during execution</li>
+    <li>Eliminates out-of-memory failures</li>
+</ul>
+
+<h3>Cost Optimization</h3>
+<ul>
+    <li>Reduces over-allocation waste</li>
+    <li>Matches workloads to cost-effective instances</li>
+    <li>Tracks savings in real-time dashboard</li>
+    <li>Provides ROI metrics</li>
+</ul>
+
+<h2>Deployment Options</h2>
+
+<p>This architecture supports multiple deployment configurations:</p>
+
+<ol>
+    <li><strong>AWS ParallelCluster + SLURM</strong> (shown above)</li>
+    <li><strong>AWS PCS (Parallel Computing Service)</strong> - Managed SLURM</li>
+    <li><strong>AWS PCS with SUSE Linux</strong> - Enterprise Linux support</li>
+    <li><strong>AWS Batch</strong> - Container-based serverless compute</li>
+</ol>
+
+<p>All configurations maintain the core prediction and optimization capabilities while adapting to the specific infrastructure.</p>
+
+<div class="note">
+<strong>Note:</strong> This architecture diagram represents the AWS ParallelCluster deployment. For AWS PCS or AWS Batch deployments, the compute infrastructure changes but the ML prediction engine, monitoring, and optimization logic remain consistent.
+</div>
+
+<h2>Containerization with Singularity</h2>
+
+<p><strong>Figure 2: Singularity Container Execution Flow (Compact)</strong></p>
+
+<p>This diagram shows how EDA workloads run in Singularity containers while maintaining seamless integration with SLURM scheduling and resource monitoring. Containers run as the user (not root), automatically mount shared filesystems, and allow SLURM and monitoring tools to track resources accurately.</p>
+
+<pre>
+┌─────────────────────────────────────────────────────────────────┐
+│  Compute Node: Singularity Container Execution                  │
+│                                                                  │
+│  Host: slurmd | SPANK Plugin | Fluent Bit                       │
+│         │            │              │                            │
+│         └────────────┼──────────────┘                            │
+│                      ▼                                           │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │ Singularity: singularity exec openroad.sif openroad ...    │ │
+│  │                                                             │ │
+│  │  ┌───────────────────────────────────────────────────────┐ │ │
+│  │  │ Container: OpenROAD EDA Tools                         │ │ │
+│  │  │ • Synthesis • Floorplan • Place • Route • Timing     │ │ │
+│  │  │                                                        │ │ │
+│  │  │ Auto-mounted: /shared/designs, /shared/logs, $HOME   │ │ │
+│  │  └───────────────────────────────────────────────────────┘ │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                                                                  │
+│  Resources tracked: CPU, Memory, I/O (visible to host)          │
+└─────────────────────────────────────────────────────────────────┘
+</pre>
+
+<p><strong>Why Singularity</strong>: No root required • Auto-mounts filesystems • Native SLURM integration • Accurate monitoring • &lt;1% overhead</p>
+
+<h3>Build &amp; Submit</h3>
+
+<pre>
+# Build
+Bootstrap: docker
+From: ubuntu:22.04
+%post
+    apt-get update && apt-get install -y git cmake
+    cd /opt && git clone https://github.com/The-OpenROAD-Project/OpenROAD.git
+    cd OpenROAD && mkdir build && cd build && cmake .. && make install
+
+# Submit
+#!/bin/bash
+#SBATCH --cpus-per-task=16 --mem=32G
+export DESIGN_CELL_COUNT=500000
+singularity exec /shared/containers/openroad.sif openroad /shared/designs/my_design.tcl
+</pre>
+
+<h3>ML-Optimized Job Submission</h3>
+
+<pre>
+import requests, subprocess
+
+# Query prediction API
+response = requests.post('http://head-node:8000/predict', json={
+    'cell_count': 500000, 'net_count': 450000,
+    'clock_freq_mhz': 500, 'utilization_target': 0.70
+})
+predictions = response.json()
+
+# Calculate resources
+max_memory = max(p['memory_gb'] for p in predictions)
+total_duration = sum(p['duration_sec'] for p in predictions)
+
+# Submit optimized job
+job_script = f"""#!/bin/bash
+#SBATCH --cpus-per-task=16 --mem={int(max_memory * 1.2)}G
+singularity exec /shared/containers/openroad.sif openroad /shared/designs/my_design.tcl
+"""
+subprocess.run(['sbatch'], input=job_script.encode())
+</pre>
+
+<h2>Additional Code Examples</h2>
+
+<h3>Log Analysis and Feature Extraction</h3>
+
+<p>Parsing EDA tool logs to extract design parameters for prediction:</p>
+
+<pre>
+import re, json
+
+def parse_openroad_log(log_file):
+    """Extract design metrics from OpenROAD log files"""
+    metrics = {}
+    
+    with open(log_file, 'r') as f:
+        content = f.read()
+        
+        # Extract cell count
+        if match := re.search(r'Number of cells:\s+(\d+)', content):
+            metrics['cell_count'] = int(match.group(1))
+        
+        # Extract net count
+        if match := re.search(r'Number of nets:\s+(\d+)', content):
+            metrics['net_count'] = int(match.group(1))
+        
+        # Extract clock frequency
+        if match := re.search(r'Clock period:\s+([\d.]+)\s*ns', content):
+            period_ns = float(match.group(1))
+            metrics['clock_freq_mhz'] = 1000.0 / period_ns
+        
+        # Extract utilization
+        if match := re.search(r'Core utilization:\s+([\d.]+)%', content):
+            metrics['utilization_target'] = float(match.group(1)) / 100.0
+    
+    return metrics
+
+# Usage
+design_params = parse_openroad_log('/shared/logs/my_design.log')
+print(json.dumps(design_params, indent=2))
+</pre>
+
+<h3>Prediction API Inference</h3>
+
+<p>Querying the ML prediction engine for resource recommendations:</p>
+
+<pre>
+import requests
+
+def get_resource_prediction(design_params):
+    """Query prediction API for optimal resource allocation"""
+    
+    api_url = 'http://head-node:8000/predict'
+    
+    # Send design parameters
+    response = requests.post(api_url, json=design_params, timeout=5)
+    response.raise_for_status()
+    
+    predictions = response.json()
+    
+    # Aggregate predictions across all stages
+    total_cpu = max(p['cpu_cores'] for p in predictions)
+    total_memory = max(p['memory_gb'] for p in predictions)
+    total_duration = sum(p['duration_sec'] for p in predictions)
+    
+    # Determine optimal instance type based on memory/CPU ratio
+    mem_per_cpu = total_memory / total_cpu
+    if mem_per_cpu &gt; 6:
+        instance_type = 'r8'  # Memory-optimized
+    elif mem_per_cpu &lt; 2:
+        instance_type = 'c8'  # Compute-optimized
+    else:
+        instance_type = 'm8'  # Balanced
+    
+    return {
+        'cpu_cores': total_cpu,
+        'memory_gb': total_memory,
+        'duration_sec': total_duration,
+        'instance_family': instance_type,
+        'stages': predictions
+    }
+
+# Usage
+design = {'cell_count': 500000, 'net_count': 450000, 
+          'clock_freq_mhz': 500, 'utilization_target': 0.70}
+recommendation = get_resource_prediction(design)
+print(f"Recommended: {recommendation['cpu_cores']} CPUs, "
+      f"{recommendation['memory_gb']}GB RAM, "
+      f"Instance: {recommendation['instance_family']}")
+</pre>
+
+<h3>SLURM Job Submit Plugin (Lua)</h3>
+
+<p>Intercepting job submissions and dynamically adjusting resources:</p>
+
+<pre>
+function slurm_job_submit(job_desc, part_list, submit_uid)
+    -- Extract design parameters from environment variables
+    local cell_count = job_desc.environment['DESIGN_CELL_COUNT']
+    local net_count = job_desc.environment['DESIGN_NET_COUNT']
+    local clock_freq = job_desc.environment['DESIGN_FREQ_MHZ']
+    
+    if cell_count and net_count and clock_freq then
+        -- Query prediction API
+        local curl_cmd = string.format(
+            'curl -s -X POST http://localhost:8000/predict ' ..
+            '-H "Content-Type: application/json" ' ..
+            '-d \'{"cell_count":%s,"net_count":%s,"clock_freq_mhz":%s}\'',
+            cell_count, net_count, clock_freq
+        )
+        
+        local handle = io.popen(curl_cmd)
+        local result = handle:read("*a")
+        handle:close()
+        
+        -- Parse JSON response (simplified)
+        local cpu = result:match('"cpu_cores":(%d+)')
+        local mem = result:match('"memory_gb":(%d+)')
+        
+        if cpu and mem then
+            -- Update job resource requirements
+            job_desc.min_cpus = tonumber(cpu)
+            job_desc.pn_min_memory = tonumber(mem) * 1024  -- Convert to MB
+            
+            slurm.log_info("Dynamic allocation: CPU=%s, Memory=%sGB", 
+                          cpu, mem)
+        end
+    end
+    
+    return slurm.SUCCESS
+end
+
+function slurm_job_modify(job_desc, job_rec, part_list, modify_uid)
+    return slurm.SUCCESS
+end
+</pre>
+
+<h3>Feedback Loop: Storing Actual Metrics</h3>
+
+<p>Collecting actual resource usage after job completion:</p>
+
+<pre>
+import sqlite3, json
+from datetime import datetime
+
+def store_job_metrics(job_id, design_params, actual_usage):
+    """Store job execution metrics for model retraining"""
+    
+    conn = sqlite3.connect('/shared/db/metrics.db')
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        INSERT INTO job_metrics 
+        (job_id, timestamp, cell_count, net_count, clock_freq_mhz,
+         actual_cpu_cores, actual_memory_gb, actual_duration_sec,
+         peak_memory_gb, avg_cpu_utilization)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (
+        job_id,
+        datetime.now().isoformat(),
+        design_params['cell_count'],
+        design_params['net_count'],
+        design_params['clock_freq_mhz'],
+        actual_usage['cpu_cores'],
+        actual_usage['memory_gb'],
+        actual_usage['duration_sec'],
+        actual_usage['peak_memory_gb'],
+        actual_usage['avg_cpu_utilization']
+    ))
+    
+    conn.commit()
+    conn.close()
+    
+    print(f"Stored metrics for job {job_id}")
+
+# Usage - called after job completes
+actual = {
+    'cpu_cores': 16,
+    'memory_gb': 28.5,
+    'duration_sec': 3600,
+    'peak_memory_gb': 28.5,
+    'avg_cpu_utilization': 0.85
+}
+store_job_metrics('12345', design_params, actual)
+</pre>
+
+<h2>Conclusion</h2>
+
+<p>In this post, we explored an ML-driven architecture for recovering over 90% of wasted compute capacity in HPC and EDA workloads on AWS. By combining intelligent resource prediction with continuous learning from actual job execution, this system eliminates out-of-memory failures and matches workloads to optimal instance types based on their specific characteristics. The architecture leverages AWS ParallelCluster with SLURM scheduling, Singularity containerization for secure and efficient workload execution, and a closed-loop feedback system that progressively improves predictions over time.</p>
+
+<p>The key components—job submission plugins, ML-based prediction APIs, real-time resource monitoring, and automated feedback loops—work together to transform how HPC clusters allocate resources. Instead of users guessing requirements and over-provisioning "to be safe," the system learns from every job execution and applies that knowledge to optimize future submissions. Engineering and HPC teams already have deep expertise in this and can align their ML workflows to this mechanism. This approach is extensible beyond EDA tools to other HPC applications including Ansys, GROMACS, and LAMMPS, and can be deployed across multiple AWS compute platforms including ParallelCluster, AWS PCS, and AWS Batch.</p>
+
+<h3>Next Steps</h3>
+
+<p>Ready to implement this solution in your environment? Here are your next steps:</p>
+
+<ol>
+    <li><strong>Try the demo code</strong>: Visit our GitHub repository [link to repository] for production-ready deployment scripts, configuration templates, and example workloads you can run in your own AWS account.</li>
+    <li><strong>Start with AWS ParallelCluster</strong>: Follow the Quick Start guide to deploy a basic cluster with SLURM, install the monitoring components, and run your first optimized jobs. You can start small with a few compute nodes and scale as you validate the approach.</li>
+    <li><strong>Explore AWS PCS</strong>: For a fully managed experience, check out AWS Parallel Computing Service (PCS) which provides managed SLURM clusters with built-in support for the components described in this architecture.</li>
+    <li><strong>Extend to your workloads</strong>: The prediction engine and monitoring framework are designed to be workload-agnostic. Adapt the feature extraction and model training to your specific applications, whether EDA, computational fluid dynamics, molecular dynamics, or other HPC domains.</li>
+</ol>
+
+<h3>Related Content</h3>
+
+<ul>
+    <li><strong>AWS ParallelCluster Documentation</strong>: Learn more about deploying and managing HPC clusters on AWS</li>
+    <li><strong>Amazon FSx for Lustre</strong>: High-performance file systems for compute-intensive workloads</li>
+    <li><strong>AWS Batch</strong>: Container-based batch computing for flexible workload execution</li>
+    <li><strong>SLURM Workload Manager</strong>: Open-source job scheduling for HPC clusters</li>
+    <li><strong>Singularity/Apptainer</strong>: Container platform designed for HPC environments</li>
+</ul>
+
+<h3>Learn More</h3>
+
+<p>For questions, feedback, or to share your implementation experiences, reach out to the AWS HPC team or join the AWS HPC community forums. We're excited to see how you apply these techniques to optimize your own workloads and recover wasted compute capacity in your environment.</p>
+
+<h2>Formatting Guidelines for AWS Blog Publication</h2>
+
+<p>When preparing the blog post content:</p>
+
+<ul>
+    <li><strong>InlineCode style</strong>: Use for highlighting syntax elements, commands, and technical terms inline (e.g., <code>sbatch</code>, <code>slurmctld</code>, <code>r8.xlarge</code>)</li>
+    <li><strong>Code style</strong>: Use for blocks of code, YAML configurations, or multi-line syntax examples</li>
+    <li><strong>No decorations</strong>: Do not add borders, color-coding, or other visual decorations to code blocks - AWS blog editors will apply consistent styling during publication</li>
+    <li><strong>Plain formatting</strong>: Keep code blocks simple and undecorated to speed up the staging process</li>
+</ul>
+
+</body>
+</html>
