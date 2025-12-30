@@ -1,0 +1,179 @@
+================================================================================
+AWS ARCHITECTURE DIAGRAM GENERATOR - SHARING PACKAGE
+================================================================================
+
+READY TO SHARE WITH YOUR COLLEAGUE!
+
+Location: /Users/spereirj/dynamic_allocation/docs/diagrams/
+
+================================================================================
+FILES TO SEND (Total: ~22KB)
+================================================================================
+
+1. generate_aws_diagram_standalone.py (5.9KB)
+   → The complete working script
+   → Fully documented with comments
+   → Includes example code
+
+2. README_FOR_SHARING.md (4.1KB)
+   → Quick start guide (60 seconds to first diagram)
+   → Common examples
+   → Troubleshooting
+
+3. SHARING_PACKAGE.md (9.1KB)
+   → Complete documentation
+   → All customization options
+   → Advanced examples
+   → Full API reference
+
+4. SHARE_WITH_COLLEAGUE.md (3.2KB)
+   → Instructions for you on what to send
+   → Email template
+   → Support resources
+
+================================================================================
+QUICK START FOR YOUR COLLEAGUE
+================================================================================
+
+1. Install prerequisites:
+   brew install graphviz
+   pip install diagrams
+
+2. Run the script:
+   python generate_aws_diagram_standalone.py
+
+3. Get the diagram:
+   Output: hpc-architecture.png
+
+================================================================================
+WHAT THE DIAGRAM SHOWS
+================================================================================
+
+✓ Head Node (EC2)
+  - SLURM Controller
+  - Job Submit Plugin (Lua)
+  - Prediction API (ML Engine)
+  - Dashboard (Web UI)
+  - Metrics Database
+
+✓ Compute Nodes (Auto Scaling)
+  - Multiple EC2 instances
+  - slurmd daemon
+  - Resource monitors
+  - c8/r8/m8 instance types
+
+✓ Shared Storage
+  - Amazon EFS
+  - FSx for Lustre
+  - FSx for NetApp ONTAP
+
+✓ AWS Services
+  - S3 (Backups)
+  - RDS (Production DB)
+  - CloudWatch (Monitoring)
+  - IAM (Security)
+
+✓ Data Flows
+  - Job submission and dispatch
+  - ML prediction queries
+  - Metrics feedback loop
+  - Monitoring connections
+  - Backup flows
+
+================================================================================
+HOW TO SHARE
+================================================================================
+
+Option 1: Email
+   Attach the 3 main files:
+   - generate_aws_diagram_standalone.py
+   - README_FOR_SHARING.md
+   - SHARING_PACKAGE.md
+
+Option 2: Slack/Teams
+   Upload the files to a channel or DM
+
+Option 3: GitHub/GitLab
+   Commit the files to a shared repository
+
+Option 4: Zip File
+   cd docs/diagrams/
+   zip aws-diagram-generator.zip \
+       generate_aws_diagram_standalone.py \
+       README_FOR_SHARING.md \
+       SHARING_PACKAGE.md
+
+================================================================================
+CUSTOMIZATION EXAMPLES
+================================================================================
+
+Change Layout:
+   direction="LR"  # Left to Right
+
+Change Output Format:
+   outformat="svg"  # Vector graphics
+   outformat="pdf"  # PDF
+
+Add AWS Service:
+   from diagrams.aws.analytics import Kinesis
+   kinesis = Kinesis("Stream")
+
+Change Colors:
+   Edge(color="red", style="bold")
+
+================================================================================
+SUPPORT RESOURCES
+================================================================================
+
+Documentation:
+   - README_FOR_SHARING.md (quick start)
+   - SHARING_PACKAGE.md (complete guide)
+
+Online:
+   - https://diagrams.mingrammer.com/
+   - https://diagrams.mingrammer.com/docs/getting-started/examples
+
+GraphViz:
+   - https://graphviz.org/download/
+
+================================================================================
+ALREADY GENERATED DIAGRAMS
+================================================================================
+
+You also have these ready-to-use files:
+
+PNG Images:
+   - hpc-architecture.png (232KB) - Full AWS architecture
+   - dataflow-simple.png (44KB) - 5-stage flow
+   - dataflow-diagram.png (171KB) - Detailed flow
+
+Word Documents (Editable):
+   - dataflow-simple.docx (36KB) - Simple flow
+   - dataflow-diagram.docx (37KB) - Detailed flow
+   - container-execution.docx (36KB) - Container execution
+
+================================================================================
+TESTING
+================================================================================
+
+Before sharing, verify it works:
+
+   cd docs/diagrams/
+   python generate_aws_diagram_standalone.py
+   
+   Expected output:
+   ✓ Diagram generated successfully!
+   ✓ Output: hpc-architecture.png
+
+================================================================================
+QUESTIONS?
+================================================================================
+
+Your colleague can:
+1. Check README_FOR_SHARING.md for quick answers
+2. Read SHARING_PACKAGE.md for detailed docs
+3. Visit https://diagrams.mingrammer.com/ for library docs
+
+================================================================================
+END OF SUMMARY
+================================================================================
